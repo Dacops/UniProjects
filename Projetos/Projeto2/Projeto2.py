@@ -368,7 +368,7 @@ def eh_animal_fertil(a):
     eh_animal_fertil: animal → booleano
     Devolve 'True' caso o animal 'a' tenha atingido a idade de reproducao e 'False' caso contrario.
     """
-    if obter_freq_reproducao(a)==obter_idade(a):
+    if obter_freq_reproducao(a)<=obter_idade(a):
         return True
     else:
         return False
@@ -765,7 +765,7 @@ def geracao(m):
                         # Verificar a fertilidade do animal
                         if not eh_animal_fertil(a):
                             mover_animal(prado, p, mov)
-                        if eh_animal_fertil(a):
+                        if eh_animal_fertil(a) and mov!=p:
                             mover_animal(prado, p, mov)
                             inserir_animal(prado, reproduz_animal(obter_animal(prado, mov)), p)
                             
@@ -775,7 +775,7 @@ def geracao(m):
                     # Verificar a fertilidade do animal
                     if not eh_animal_fertil(a):
                         mover_animal(prado, p, mov)
-                    if eh_animal_fertil(a):
+                    if eh_animal_fertil(a) and mov!=p:
                         mover_animal(prado, p, mov)
                         inserir_animal(prado, reproduz_animal(obter_animal(prado, mov)), p)
     return prado
@@ -843,20 +843,21 @@ def simula_ecossistema(f,g,v):
                 if eh_presa(obter_animal(prado, cria_posicao(x,y))):
                     presas += 1
 
+
         if presas_ant!=presas or predadores_ant!=predadores:
             if v==True:
                 print('Predadores: {} vs Presas: {} (Gen. {})'.format(predadores,presas,i+1))
                 print(prado_para_str(turno))
 
-        if v==True and turno_ant==turno:
+        if (v==True and turno_ant==turno) or (i+1)==g:
             return '({}, {})'.format(predadores,presas)
 
-        if v==False and turno_ant==turno:
+        if (v==False and turno_ant==turno) or (i+1)==g:
             print('Predadores: {} vs Presas: {} (Gen. {})'.format(predadores,presas,g))
             print(prado_para_str(turno))
             return '({}, {})'.format(predadores,presas)
             
         presas_ant, predadores_ant, turno_ant = presas, predadores, turno
 
-print(simula_ecossistema('C:\\Users\\david\\OneDrive\\Desktop\\Uni\\Fprog\\Projetos\\Projeto2\\config.txt', 200, True))
+
 
