@@ -182,7 +182,7 @@ def cria_copia_animal(a):
     cria_copia_animal: animal → animal
     Recebe um animal 'a' (predador ou presa) e devolve uma nova copia do animal.
     """
-    return {'especie':a['especie'], 'f_rep':a['f_rep'], 'f_ali':a['f_ali'], 'idade':a['idade'], 'fome':['fome']}
+    return {'especie':a['especie'], 'f_rep':a['f_rep'], 'f_ali':a['f_ali'], 'idade':a['idade'], 'fome':a['fome']}
 
 
 def obter_especie_animal(a):
@@ -462,8 +462,7 @@ def obter_tamanho_x(m):
     obter_tamanho_x: prado → int
     Devolve o valor inteiro que corresponde ah dimensao 'x' do prado.
     """
-    if 'limite' in m:
-        return obter_pos_x(m['limite'])+1
+    return obter_pos_x(m['limite'])+1
 
 
 def obter_tamanho_y(m):
@@ -471,8 +470,7 @@ def obter_tamanho_y(m):
     obter_tamanho_y: prado → int
     Devolve o valor inteiro que corresponde ah dimensao 'y' do prado.
     """
-    if 'limite' in m:
-        return obter_pos_y(m['limite'])+1
+    return obter_pos_y(m['limite'])+1
 
 
 def obter_numero_predadores(m):
@@ -544,6 +542,7 @@ def mover_animal(m, p1, p2):
             posicoes[count] = p2
         count += 1
     m['coords']=tuple(posicoes)
+    return m
 
 
 def inserir_animal(m, a, p):
@@ -563,14 +562,14 @@ def eh_prado(m):
     Devolve 'True' caso o seu argumento seja um TAD prado e 'False' caso contrario.
     """
     #{'limite':d, 'rochas':r, 'animais':a, 'coords':p}
-    if (type(m)!=dict or
-        len(m)!=4 or
+    if (type(m)==dict and
+        len(m)==4 and
 
         # Existencia dos campos
-        'limite' not in m or
-        'rochas' not in m or
-        'animais' not in m or
-        'coords' not in m or
+        'limite' in m and
+        'rochas' in m and
+        'animais' in m and
+        'coords' in m and
 
         # Validade dos campo
         eh_posicao(m['limite']) or
@@ -578,8 +577,8 @@ def eh_prado(m):
         (eh_animal(animal) for animal in m['animais']) or
         (eh_posicao(posicao) for posicao in m['coords'])):
 
-        return False
-    return True
+        return True
+    return False
 
 
 def eh_posicao_animal(m, p):
@@ -682,11 +681,29 @@ def obter_posicoes_adjacentes_sorted(m, p):
     Devolve a posicao adjacente para qual o animal move, de acordo com as regras de movimento.
     FUNCAO LIGEIRAMENTE MODIFICADA (de obter_posicoes-adjacentes) PARA SER UTILIZADA EM OBTER_MOVIMENTO
     """
-    # constraints unicas desta funcao
-    pa1=cria_copia_posicao(cria_posicao(p['x'], p['y']-1)) if p['x']>0 and p['y']-1>0 and p['x']<obter_tamanho_x(m)-1 and p['y']-1<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(p['x'], p['y']-1)) else None
-    pa2=cria_copia_posicao(cria_posicao(p['x']+1, p['y'])) if p['x']+1>0 and p['y']>0 and p['x']+1<obter_tamanho_x(m)-1 and p['y']<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(p['x']+1, p['y'])) else None
-    pa3=cria_copia_posicao(cria_posicao(p['x'], p['y']+1)) if p['x']>0 and p['y']+1>0 and p['x']<obter_tamanho_x(m)-1 and p['y']+1<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(p['x'], p['y']+1)) else None
-    pa4=cria_copia_posicao(cria_posicao(p['x']-1, p['y'])) if p['x']-1>0 and p['y']>0 and p['x']-1<obter_tamanho_x(m)-1 and p['y']<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(p['x']-1, p['y'])) else None
+    # adiciona limites ao prado, definidos pelo prado e verifica se a posicao eh livre
+    if eh_presa(obter_animal(m, p)):
+        pa1=cria_copia_posicao(cria_posicao(p['x'], p['y']-1)) if p['x']>0 and p['y']-1>0 and p['x']<obter_tamanho_x(m)-1 and p['y']-1<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(p['x'], p['y']-1)) else None
+        pa2=cria_copia_posicao(cria_posicao(p['x']+1, p['y'])) if p['x']+1>0 and p['y']>0 and p['x']+1<obter_tamanho_x(m)-1 and p['y']<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(p['x']+1, p['y'])) else None
+        pa3=cria_copia_posicao(cria_posicao(p['x'], p['y']+1)) if p['x']>0 and p['y']+1>0 and p['x']<obter_tamanho_x(m)-1 and p['y']+1<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(p['x'], p['y']+1)) else None
+        pa4=cria_copia_posicao(cria_posicao(p['x']-1, p['y'])) if p['x']-1>0 and p['y']>0 and p['x']-1<obter_tamanho_x(m)-1 and p['y']<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(p['x']-1, p['y'])) else None
+    
+    # funciona tal como o bloco de codigo acima, no entanto se a posicao estiver ocupada com uma presa retorna-a tambem
+    if eh_predador(obter_animal(m, p)):
+        pa1=cria_copia_posicao(cria_posicao(p['x'], p['y']-1)) if p['x']>0 and p['y']-1>0 and p['x']<obter_tamanho_x(m)-1 and p['y']-1<obter_tamanho_y(m)-1 else None
+        pa2=cria_copia_posicao(cria_posicao(p['x']+1, p['y'])) if p['x']+1>0 and p['y']>0 and p['x']+1<obter_tamanho_x(m)-1 and p['y']<obter_tamanho_y(m)-1 else None
+        pa3=cria_copia_posicao(cria_posicao(p['x'], p['y']+1)) if p['x']>0 and p['y']+1>0 and p['x']<obter_tamanho_x(m)-1 and p['y']+1<obter_tamanho_y(m)-1 else None
+        pa4=cria_copia_posicao(cria_posicao(p['x']-1, p['y'])) if p['x']-1>0 and p['y']>0 and p['x']-1<obter_tamanho_x(m)-1 and p['y']<obter_tamanho_y(m)-1 else None
+    
+        if not eh_posicao_livre(m, pa1) and not eh_presa(obter_animal(m, pa1)):
+            pa1=None
+        if not eh_posicao_livre(m, pa2) and not eh_presa(obter_animal(m, pa2)):
+            pa2=None
+        if not eh_posicao_livre(m, pa3) and not eh_presa(obter_animal(m, pa3)):
+            pa3=None
+        if not eh_posicao_livre(m, pa4) and not eh_presa(obter_animal(m, pa4)):
+            pa4=None
+
     pad, pp = (pa1, pa2, pa3, pa4), ()
     for pa in pad:
         if eh_posicao(pa):
@@ -710,10 +727,13 @@ def obter_movimento(m, p):
         return p
     if eh_predador(animal):
         coord_ad = obter_posicoes_adjacentes_sorted(m, p)
-        # posicoes adjacentes, procura por presa
+        presas = []
+        # posicoes adjacentes, procura por presas
         for coord in coord_ad:
             if (eh_posicao_animal(m, coord) and eh_presa(obter_animal(m, coord))):
-                return coord
+                presas.append(coord)
+        if len(presas)!=0:
+            return presas[n%len(presas)]
         if len(coord_ad)!=0:
             return coord_ad[n%l]
         return p
@@ -858,6 +878,5 @@ def simula_ecossistema(f,g,v):
             return '({}, {})'.format(predadores,presas)
             
         presas_ant, predadores_ant, turno_ant = presas, predadores, turno
-
 
 
