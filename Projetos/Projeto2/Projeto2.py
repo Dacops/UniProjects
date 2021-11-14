@@ -162,18 +162,21 @@ def cria_animal(s, r, a):
     cria_animal: str × int × int → animal
     Recebe uma cadeia de caracteres 's' nao vazia correspondente ah especie do animal e dois valores inteiros 
     correspondentes ah frequencia de reproducao 'r' e ah frequencia de alimentacao 'a' e devolve o animal
-    da forma interna do animal: {'especie':str, 'f_rep':int, 'f_ali':int, 'idade':int, 'fome':int}
+    da forma interna do animal (predador): {'especie':str, 'f_rep':int, 'f_ali':int, 'idade':int, 'fome':int}
+    (presa): {'especie':str, 'f_rep':int, 'idade':int}
     ('idade' e 'fome' tomam valor '0' nesta funcao).
     O construtor tambem verifica a validade dos seus argumentos, gerando um ValueError com a mensagem 
     'cria animal: argumentos invalidos' caso os seus argumentos nao sejam validos.
     """
     # Verificacao do tipo, tamanho dos argumentos
     if (type(s)!=str or
-        str=='' or
+        len(s)==0 or
         type(r)!=int or
         type(a)!=int or
         r<=0 or a<0):
         raise ValueError('cria_animal: argumentos invalidos')
+    if a==0:
+        return {'especie':s, 'f_rep':r, 'idade':0}
     return {'especie':s, 'f_rep':r, 'f_ali':a, 'idade':0, 'fome':0}
 
 
@@ -182,7 +185,10 @@ def cria_copia_animal(a):
     cria_copia_animal: animal → animal
     Recebe um animal 'a' (predador ou presa) e devolve uma nova copia do animal.
     """
-    return {'especie':a['especie'], 'f_rep':a['f_rep'], 'f_ali':a['f_ali'], 'idade':a['idade'], 'fome':a['fome']}
+    if eh_predador(a):
+        return {'especie':a['especie'], 'f_rep':a['f_rep'], 'f_ali':a['f_ali'], 'idade':a['idade'], 'fome':a['fome']}
+    if eh_presa(a):
+        return {'especie':a['especie'], 'f_rep':a['f_rep'], 'idade':a['idade']}
 
 
 def obter_especie_animal(a):
@@ -271,32 +277,9 @@ def eh_animal(a):
     eh_animal: universal → booleano
     Devolve 'True' caso o seu argumento seja um TAD animal e 'False' caso contrario.
     """
-    if (type(a)!=dict or
-        len(a)!=5 or
-
-        # Verificacao de existencia dos campos do dicionario
-        'especie' not in a or
-        'f_rep' not in a or
-        'f_ali' not in a or
-        'idade' not in a or
-        'fome' not in a or
-
-        # Verificacao do tipo dos campos
-        type(a['especie'])!=str or
-        type(a['f_rep'])!=int or
-        type(a['f_ali'])!=int or
-        type(a['idade'])!=int or
-        type(a['fome'])!=int or
-        
-        # Verificacao do tipo dos argumentos
-        len(a['especie'])==0 or
-        a['f_rep']<=0 or
-        a['f_ali']<0 or
-        a['idade']<0 or
-        a['fome']<0):
-        
-        return False
-    return True
+    if eh_presa(a) or eh_predador(a):  
+        return True
+    return False
 
 
 def eh_predador(a):
@@ -304,8 +287,29 @@ def eh_predador(a):
     eh_predador: universal → booleano
     Devolve 'True' caso o seu argumento seja um TAD animal do tipo predador e 'False' caso contrario.
     """
-    if (eh_animal(a) and
-        a['f_ali']>0):
+    if (type(a)==dict and
+        len(a)==5 and
+
+        # Verificacao de existencia dos campos do dicionario
+        'especie' in a and
+        'f_rep' in a and
+        'f_ali' in a and
+        'idade' in a and
+        'fome' in a and
+
+        # Verificacao do tipo dos campos
+        type(a['especie'])==str and
+        type(a['f_rep'])==int and
+        type(a['f_ali'])==int and
+        type(a['idade'])==int and
+        type(a['fome'])==int and
+        
+        # Verificacao do tipo dos argumentos
+        len(a['especie'])!=0 and
+        a['f_rep']>0 and
+        a['f_ali']>=0 and
+        a['idade']>=0 and
+        a['fome']>=0):
         return True
     return False
 
@@ -315,8 +319,23 @@ def eh_presa(a):
     eh_presa: universal → booleano
     Devolve 'True' caso o seu argumento seja um TAD animal do tipo presa e 'False' caso contrario.
     """
-    if (eh_animal(a) and
-        a['f_ali']==0):
+    if (type(a)==dict and
+        len(a)==3 and
+
+        # Verificacao de existencia dos campos do dicionario
+        'especie' in a and
+        'f_rep' in a and
+        'idade' in a and
+
+        # Verificacao do tipo dos campos
+        type(a['especie'])==str and
+        type(a['f_rep'])==int and
+        type(a['idade'])==int and
+        
+        # Verificacao do tipo dos argumentos
+        len(a['especie'])!=0 and
+        a['f_rep']>0 and
+        a['idade']>=0):
         return True
     return False
 
@@ -326,14 +345,18 @@ def animais_iguais(a1, a2):
     animais_iguais: animal × animal → booleano
     Devolve 'True' apenas se 'a1' e 'a2' sao animais e sao iguais.
     """
-    if (eh_animal(a1) and               
-        eh_animal(a2) and
-        a1['especie']==a2['especie'] and
-        a1['f_rep']==a2['f_rep'] and
-        a1['f_ali']==a2['f_ali'] and
-        a1['idade']==a2['idade'] and
-        a1['fome']==a2['fome']):
-        return True
+    if (eh_predador(a1) and eh_predador(a2)):
+        if (a1['especie']==a2['especie'] and
+            a1['f_rep']==a2['f_rep'] and
+            a1['f_ali']==a2['f_ali'] and
+            a1['idade']==a2['idade'] and
+            a1['fome']==a2['fome']):
+                return True
+    if (eh_presa(a1) and eh_presa(a2)):
+        if (a1['especie']==a2['especie'] and
+            a1['f_rep']==a2['f_rep'] and
+            a1['idade']==a2['idade']):
+                return True
     return False
 
 
@@ -396,9 +419,10 @@ def reproduz_animal(a):
     modificando destrutivamente o animal passado como argumento 'a' alterando a sua idade para '0'.
     """
     n_a = cria_copia_animal(a)
-    n_a = reset_fome(n_a)
     n_a = reset_idade(n_a)
     a = reset_idade(a)
+    if eh_predador(a):
+        n_a = reset_fome(n_a)
     return n_a
 
 
@@ -441,11 +465,21 @@ def cria_prado(d, r, a, p):
     O construtor verifica tambem a validade dos seus argumentos, gerando um ValueError com a mensagem
     'cria prado: argumentos invalidos' caso os seus argumentos nao sejam validos.
     """
-    if (eh_posicao(d) and
-       (eh_posicao(rocha) for rocha in r) and
-       (eh_animal(animal) for animal in a) and
-       (eh_posicao(coord) for coord in p)):
-       return {'limite':d, 'rochas':r, 'animais':a, 'coords':p}
+    if type(r)==tuple and type(a)==tuple and type(p)==tuple:
+        if (eh_posicao(d) and
+            (eh_posicao(rocha) for rocha in r) and
+            (eh_animal(animal) for animal in a) and
+            (eh_posicao(coord) for coord in p)):
+            # no caso de as posicoes de animais/rochas estarem para lah do limite
+            for rocha in r:
+                if rocha['x']>=d['x'] or rocha['y']>=d['y']:
+                    raise ValueError('cria_prado: argumentos invalidos')
+            for coord in p:
+                if coord['x']>=d['x'] or coord['y']>=d['y']:
+                    raise ValueError('cria_prado: argumentos invalidos')
+            if len(a)!=len(p):
+                raise ValueError('cria_prado: argumentos invalidos')
+            return {'limite':d, 'rochas':r, 'animais':a, 'coords':p}
     raise ValueError('cria_prado: argumentos invalidos')
 
 
@@ -478,7 +512,11 @@ def obter_numero_predadores(m):
     obter_numero_predadores: prado → int
     Devolve o numero de animais predadores no prado.
     """
-    return (eh_predador(animal) for animal in m['animais'])
+    count = 0
+    for animal in m['animais']:
+        if eh_predador(animal):
+            count+=1
+    return count
 
 
 def obter_numero_presas(m):
@@ -486,7 +524,11 @@ def obter_numero_presas(m):
     obter_numero_presas: prado → int
     Devolve o numero de animais presas no prado.
     """
-    return (eh_presa(animal) for animal in m['animais'])
+    count = 0
+    for animal in m['animais']:
+        if eh_presa(animal):
+            count+=1
+    return count
 
 
 def obter_posicoes_animais(m):
@@ -494,7 +536,13 @@ def obter_posicoes_animais(m):
     obter_posicao_animais: prado → tuplo posicoes
     Devolve um tuplo contendo as posicoes do prado ocupadas por animais, ordenadas em ordem de leitura do prado.
     """
-    return (ordenar_posicoes(posicao) for posicao in m['coords'])
+    posicoes = ()
+    for y in range(obter_tamanho_y(m)):
+        for x in range(obter_tamanho_x(m)):
+            p = cria_posicao(x,y)
+            if eh_posicao_animal(m, p):
+                posicoes += (p, )
+    return posicoes
 
 
 def obter_animal(m, p):
@@ -562,14 +610,14 @@ def eh_prado(m):
     Devolve 'True' caso o seu argumento seja um TAD prado e 'False' caso contrario.
     """
     #{'limite':d, 'rochas':r, 'animais':a, 'coords':p}
-    if (type(m)==dict and
-        len(m)==4 and
+    if (type(m)!=dict or
+        len(m)!=4 or
 
         # Existencia dos campos
-        'limite' in m and
-        'rochas' in m and
-        'animais' in m and
-        'coords' in m and
+        'limite' not in m or
+        'rochas' not in m or
+        'animais' not in m or
+        'coords' not in m or
 
         # Validade dos campo
         eh_posicao(m['limite']) or
@@ -577,8 +625,8 @@ def eh_prado(m):
         (eh_animal(animal) for animal in m['animais']) or
         (eh_posicao(posicao) for posicao in m['coords'])):
 
-        return True
-    return False
+        return False
+    return True
 
 
 def eh_posicao_animal(m, p):
@@ -618,11 +666,28 @@ def prados_iguais(p1, p2):
     """
     if (eh_prado(p1) and
         eh_prado(p2) and
-        p1['limite']==p2['limite'] and
-        p1['rochas']==p2['rochas'] and
-        p1['animais']==p2['animais'] and
-        p1['coords']==p2['coords']):
-        return True
+        len(p1['rochas'])==len(p2['rochas']) and
+        len(p1['animais'])==len(p2['animais']) and
+        p1['limite']==p2['limite']):
+        
+        # como animais e coords nesta TAD são dicionários, um simples sorted() não resolve esta questão em que por exemplo
+        # os animais an1+an2 não seriam igual a an2+an1. Assim utilizei este método menos "bonito" mas que funciona.
+        count=0
+        for p in p1['rochas']:
+            if p in p2['rochas']:
+                count+=1
+                if count==len(p1['rochas']):
+                    count=0
+                    for p in p1['animais']:
+                        if p in p2['animais']:
+                            count+=1
+                            if count==len(p1['animais']):
+                                count=0
+                                for p in p1['coords']:
+                                    if p in p2['coords']:
+                                        count+=1
+                                        if count==len(p1['coords']):
+                                            return True
     return False
 
 
@@ -755,7 +820,7 @@ def geracao(m):
     a uma geracao completa, e devolve o proprio prado. Isto eh, seguindo a ordem de leitura do prado, cada animal 
     (vivo) realiza o seu turno de acao de acordo com as regras descritas.
     """
-    # De forma que "prado" não seja variavel local e prossiga para a proxima geracao
+    # De forma que "prado" não seja variavel local e prossiga para a proxima geracao.
     global prado
     # Cria uma copia do prado, um prado é verificado e o outro alterado, de forma a que um prado não seja atualizado 
     # com dados inseridos nessa geracao.
@@ -811,33 +876,33 @@ def simula_ecossistema(f,g,v):
     e o numero de geracao no inıcio da simulacao e apos a ultima geracao. No modo verboso, apos cada geracao, mostra-se tambem
     o prado, o numero de animais e o numero de geracao, apenas se o numero de animais predadores ou presas se tiver alterado.
     """
-    # Interpretaçao de config
+    # Interpretaçao de config.
     config = open(f, 'r')
     full_config = config.readlines()
 
-    # Por default, open da return de str, transformacao em tuples
+    # Por default, open da return de str, transformacao em tuples.
     for i in range(len(full_config)):
         full_config[i]=eval(full_config[i])
 
-    # Obtencao do limite do prado
+    # Obtencao do limite do prado.
     limite = cria_posicao(full_config[0][0], full_config[0][1])
 
-    # Obtencao das rochas
+    # Obtencao das rochas.
     rochas = ()
     for rocha in full_config[1]:
         rochas += (cria_posicao(rocha[0], rocha[1]), )
 
-    # Obtencao de animais e respetivas coordenadas
+    # Obtencao de animais e respetivas coordenadas.
     animais, coordenadas = (), ()
     for animal in full_config[2:]:
         animais += (cria_animal(animal[0], animal[1], animal[2]), )
         coordenadas += (cria_posicao(animal[3][0], animal[3][1]), )
 
-    # Criacao de prado, argumento para geracao()
+    # Criacao de prado, argumento para geracao().
     global prado
     prado = cria_prado(limite, rochas, animais, coordenadas)
 
-    # Simulacao de 'g' geracoes
+    # Simulacao de 'g' geracoes.
     for i in range(g):
         # Geracao 0
         if i==0:
@@ -851,10 +916,10 @@ def simula_ecossistema(f,g,v):
             print(prado_para_str(prado))
             presas_ant, predadores_ant, turno_ant = pr, pre, prado
 
-        # Dah update a prado
+        # Dah update a prado.
         turno = geracao(prado)
 
-        # Obtencao de numero de presas/predadores para o output
+        # Obtencao de numero de presas/predadores para o output.
         presas, predadores = 0, 0
         for y in range(obter_tamanho_y(prado)):
             for x in range(obter_tamanho_x(prado)):
@@ -878,5 +943,3 @@ def simula_ecossistema(f,g,v):
             return '({}, {})'.format(predadores,presas)
             
         presas_ant, predadores_ant, turno_ant = presas, predadores, turno
-
-
