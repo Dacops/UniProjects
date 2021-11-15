@@ -38,7 +38,8 @@ def cria_copia_posicao(p):
     cria_copia_posicao: posicao → posicao
     Recebe uma posicao e devolve uma copia nova da posicao.
     """
-    return {'x':p['x'], 'y':p['y']}
+    x, y = obter_pos_x(p), obter_pos_y(p)
+    return {'x':x, 'y':y}
 
 
 def obter_pos_x(p):
@@ -93,19 +94,16 @@ def posicao_para_str(p):
     Devolve a cadeia de caracteres '(x, y)' que representa o seu argumento,
     sendo os valores 'x' e 'y' as coordenadas de 'p'.
     """
-    return '({}, {})'.format(obter_pos_x(p), obter_pos_y(p))
+    x, y = obter_pos_x(p), obter_pos_y(p)
+    return '({}, {})'.format(x, y)
 
 
 def obter_posicoes_adjacentes(p):
-    """
-    obter_posicoes_adjacentes: posicao → tuplo
-    Devolve um tuplo com as posicoes adjacentes ah posicao 'p', comecando pela posicao acima de 'p'
-    e seguindo no sentido horario.
-    """
-    pa1=cria_copia_posicao(cria_posicao(p['x'], p['y']-1)) if p['x']>=0 and p['y']-1>=0 else None
-    pa2=cria_copia_posicao(cria_posicao(p['x']+1, p['y'])) if p['x']+1>=0 and p['y']>=0 else None
-    pa3=cria_copia_posicao(cria_posicao(p['x'], p['y']+1)) if p['x']>=0 and p['y']+1>=0 else None
-    pa4=cria_copia_posicao(cria_posicao(p['x']-1, p['y'])) if p['x']-1>=0 and p['y']>=0 else None
+    x, y = obter_pos_x(p), obter_pos_y(p)
+    pa1=cria_copia_posicao(cria_posicao(x, y-1)) if x>=0 and y-1>=0 else None
+    pa2=cria_copia_posicao(cria_posicao(x+1, y)) if x+1>=0 and y>=0 else None
+    pa3=cria_copia_posicao(cria_posicao(x, y+1)) if x>=0 and y+1>=0 else None
+    pa4=cria_copia_posicao(cria_posicao(x-1, y)) if x-1>=0 and y>=0 else None
     pad, pp = (pa1, pa2, pa3, pa4), ()
     for pa in pad:
         if eh_posicao(pa):
@@ -119,16 +117,17 @@ def ordenar_posicoes(t):
     Devolve um tuplo contendo as mesmas posicoes do tuplo fornecido como argumento, 
     ordenadas de acordo com a ordem de leitura do prado.
     """
-    t = sorted(t, key=lambda item:item.get('y'))
-    coordenada_anterior, count = None, 0
-    for coordenada in t:
-        if coordenada_anterior!=None:
-            if coordenada['y']==coordenada_anterior['y']:
-                coordenadas = [coordenada, coordenada_anterior]
-                coordenadas = sorted(coordenadas, key=lambda item:item.get('x'))
-                t = t[:count-1] + list(coordenadas) + t[count+1:]
-        coordenada_anterior, count = coordenada, count+1
-    return t
+    t = list(t)
+    for i in range(4):
+        count, posicao_anterior = 0, None
+        for posicao in t:
+            if posicao_anterior != None:
+                if obter_pos_y(posicao_anterior)>obter_pos_y(posicao):
+                    t[count-1], t[count] = t[count], t[count-1]
+                if obter_pos_x(posicao_anterior)>obter_pos_x(posicao) and obter_pos_y(posicao)==obter_pos_y(posicao_anterior):
+                    t[count-1], t[count] = t[count], t[count-1]
+            posicao_anterior, count = posicao, count+1
+    return tuple(t)
 
 
 
@@ -191,7 +190,7 @@ def cria_copia_animal(a):
         return {'especie':a['especie'], 'f_rep':a['f_rep'], 'idade':a['idade']}
 
 
-def obter_especie_animal(a):
+def obter_especie(a):
     """
     obter_especie: animal → str
     Devolve a cadeia de caracteres correspondente ah especie do animal.
@@ -212,6 +211,8 @@ def obter_freq_alimentacao(a):
     obter_freq_alimentacao: animal → int
     Devolve a frequencia de alimentacao do animal 'a'.
     """
+    if eh_presa(a):
+        return 0
     return a['f_ali']    
 
 
@@ -228,6 +229,8 @@ def obter_fome(a):
     obter_fome: animal → int
     Devolve a fome do animal 'a'.
     """
+    if eh_presa(a):
+        return 0
     return a['fome']
 
 
@@ -465,22 +468,32 @@ def cria_prado(d, r, a, p):
     O construtor verifica tambem a validade dos seus argumentos, gerando um ValueError com a mensagem
     'cria prado: argumentos invalidos' caso os seus argumentos nao sejam validos.
     """
-    if type(r)==tuple and type(a)==tuple and type(p)==tuple:
-        if (eh_posicao(d) and
-            (eh_posicao(rocha) for rocha in r) and
-            (eh_animal(animal) for animal in a) and
-            (eh_posicao(coord) for coord in p)):
-            # no caso de as posicoes de animais/rochas estarem para lah do limite
-            for rocha in r:
-                if rocha['x']>=d['x'] or rocha['y']>=d['y']:
-                    raise ValueError('cria_prado: argumentos invalidos')
-            for coord in p:
-                if coord['x']>=d['x'] or coord['y']>=d['y']:
-                    raise ValueError('cria_prado: argumentos invalidos')
-            if len(a)!=len(p):
-                raise ValueError('cria_prado: argumentos invalidos')
-            return {'limite':d, 'rochas':r, 'animais':a, 'coords':p}
-    raise ValueError('cria_prado: argumentos invalidos')
+    if type(r)!=tuple or type(a)!=tuple or type(p)!=tuple:
+        raise ValueError('cria_prado: argumentos invalidos')
+    if not eh_posicao(d):
+        raise ValueError('cria_prado: argumentos invalidos')
+    for rocha in r:
+        if not eh_posicao(rocha):
+            raise ValueError('cria_prado: argumentos invalidos')
+    for animal in a:
+        if not eh_animal(animal):
+            raise ValueError('cria_prado: argumentos invalidos')
+    for coord in p:
+        if not eh_posicao(coord):
+            raise ValueError('cria_prado: argumentos invalidos')
+
+    # no caso de as posicoes de animais/rochas estarem para lah do limite
+    for rocha in r:
+        if rocha['x']>=d['x'] or rocha['y']>=d['y']:
+            raise ValueError('cria_prado: argumentos invalidos')
+    for coord in p:
+        if coord['x']>=d['x'] or coord['y']>=d['y']:
+            raise ValueError('cria_prado: argumentos invalidos')
+    if len(a)!=len(p):
+        raise ValueError('cria_prado: argumentos invalidos')
+    if len(a)<1:
+        raise ValueError('cria_prado: argumentos invalidos')
+    return {'limite':d, 'rochas':r, 'animais':a, 'coords':p}
 
 
 def cria_copia_prado(m):
@@ -531,7 +544,7 @@ def obter_numero_presas(m):
     return count
 
 
-def obter_posicoes_animais(m):
+def obter_posicao_animais(m):
     """
     obter_posicao_animais: prado → tuplo posicoes
     Devolve um tuplo contendo as posicoes do prado ocupadas por animais, ordenadas em ordem de leitura do prado.
@@ -617,15 +630,21 @@ def eh_prado(m):
         'limite' not in m or
         'rochas' not in m or
         'animais' not in m or
-        'coords' not in m or
-
-        # Validade dos campo
-        eh_posicao(m['limite']) or
-        (eh_posicao(rocha) for rocha in m['rochas']) or
-        (eh_animal(animal) for animal in m['animais']) or
-        (eh_posicao(posicao) for posicao in m['coords'])):
-
+        'coords' not in m):
         return False
+        
+    # Validade dos campos
+    if not eh_posicao(m['limite']):
+        return False
+    for rocha in m['rochas']:
+        if not eh_posicao(rocha):
+            return False
+    for animal in m['animais']:
+        if not eh_animal(animal):
+            return False
+    for coord in m['coords']:
+         if not eh_posicao(coord):
+            return False
     return True
 
 
@@ -644,6 +663,9 @@ def eh_posicao_obstaculo(m, p):
     eh_posicao_obstaculo: prado × posicao → booleano
     Devolve 'True' apenas no caso da posicao 'p' do prado corresponder a uma montanha ou rochedo.
     """
+    x, y, a, b = obter_pos_x(p), obter_pos_y(p), obter_tamanho_x(m)-1, obter_tamanho_y(m)-1
+    if x<1 or x>=a or y<1 or y>=b:
+        return True
     if p in m['rochas']:
         return True
     return False
@@ -669,7 +691,6 @@ def prados_iguais(p1, p2):
         len(p1['rochas'])==len(p2['rochas']) and
         len(p1['animais'])==len(p2['animais']) and
         p1['limite']==p2['limite']):
-        
         # como animais e coords nesta TAD são dicionários, um simples sorted() não resolve esta questão em que por exemplo
         # os animais an1+an2 não seriam igual a an2+an1. Assim utilizei este método menos "bonito" mas que funciona.
         count=0
@@ -747,18 +768,19 @@ def obter_posicoes_adjacentes_sorted(m, p):
     FUNCAO LIGEIRAMENTE MODIFICADA (de obter_posicoes-adjacentes) PARA SER UTILIZADA EM OBTER_MOVIMENTO
     """
     # adiciona limites ao prado, definidos pelo prado e verifica se a posicao eh livre
+    x, y = obter_pos_x(p), obter_pos_y(p)
     if eh_presa(obter_animal(m, p)):
-        pa1=cria_copia_posicao(cria_posicao(p['x'], p['y']-1)) if p['x']>0 and p['y']-1>0 and p['x']<obter_tamanho_x(m)-1 and p['y']-1<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(p['x'], p['y']-1)) else None
-        pa2=cria_copia_posicao(cria_posicao(p['x']+1, p['y'])) if p['x']+1>0 and p['y']>0 and p['x']+1<obter_tamanho_x(m)-1 and p['y']<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(p['x']+1, p['y'])) else None
-        pa3=cria_copia_posicao(cria_posicao(p['x'], p['y']+1)) if p['x']>0 and p['y']+1>0 and p['x']<obter_tamanho_x(m)-1 and p['y']+1<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(p['x'], p['y']+1)) else None
-        pa4=cria_copia_posicao(cria_posicao(p['x']-1, p['y'])) if p['x']-1>0 and p['y']>0 and p['x']-1<obter_tamanho_x(m)-1 and p['y']<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(p['x']-1, p['y'])) else None
+        pa1=cria_copia_posicao(cria_posicao(x, y-1)) if x>0 and y-1>0 and x<obter_tamanho_x(m)-1 and y-1<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(x, y-1)) else None
+        pa2=cria_copia_posicao(cria_posicao(x+1, y)) if x+1>0 and y>0 and x+1<obter_tamanho_x(m)-1 and y<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(x+1, y)) else None
+        pa3=cria_copia_posicao(cria_posicao(x, y+1)) if x>0 and y+1>0 and x<obter_tamanho_x(m)-1 and y+1<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(x, y+1)) else None
+        pa4=cria_copia_posicao(cria_posicao(x-1, y)) if x-1>0 and y>0 and x-1<obter_tamanho_x(m)-1 and y<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(x-1, y)) else None
     
     # funciona tal como o bloco de codigo acima, no entanto se a posicao estiver ocupada com uma presa retorna-a tambem
     if eh_predador(obter_animal(m, p)):
-        pa1=cria_copia_posicao(cria_posicao(p['x'], p['y']-1)) if p['x']>0 and p['y']-1>0 and p['x']<obter_tamanho_x(m)-1 and p['y']-1<obter_tamanho_y(m)-1 else None
-        pa2=cria_copia_posicao(cria_posicao(p['x']+1, p['y'])) if p['x']+1>0 and p['y']>0 and p['x']+1<obter_tamanho_x(m)-1 and p['y']<obter_tamanho_y(m)-1 else None
-        pa3=cria_copia_posicao(cria_posicao(p['x'], p['y']+1)) if p['x']>0 and p['y']+1>0 and p['x']<obter_tamanho_x(m)-1 and p['y']+1<obter_tamanho_y(m)-1 else None
-        pa4=cria_copia_posicao(cria_posicao(p['x']-1, p['y'])) if p['x']-1>0 and p['y']>0 and p['x']-1<obter_tamanho_x(m)-1 and p['y']<obter_tamanho_y(m)-1 else None
+        pa1=cria_copia_posicao(cria_posicao(x, y-1)) if x>0 and y-1>0 and x<obter_tamanho_x(m)-1 and y-1<obter_tamanho_y(m)-1 else None
+        pa2=cria_copia_posicao(cria_posicao(x+1, y)) if x+1>0 and y>0 and x+1<obter_tamanho_x(m)-1 and y<obter_tamanho_y(m)-1 else None
+        pa3=cria_copia_posicao(cria_posicao(x, y+1)) if x>0 and y+1>0 and x<obter_tamanho_x(m)-1 and y+1<obter_tamanho_y(m)-1 else None
+        pa4=cria_copia_posicao(cria_posicao(x-1, y)) if x-1>0 and y>0 and x-1<obter_tamanho_x(m)-1 and y<obter_tamanho_y(m)-1 else None
     
         if not eh_posicao_livre(m, pa1) and not eh_presa(obter_animal(m, pa1)):
             pa1=None

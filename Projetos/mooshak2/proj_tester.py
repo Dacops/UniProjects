@@ -53,9 +53,8 @@ class TestTADPosicao(unittest.TestCase):
         self.assertTupleEqual(("(8, 0)", "(7, 1)", "(6, 0)"),
                               tuple(target.posicao_para_str(x) for x in t))
         self.assertTupleEqual(("(6, 0)", "(8, 0)", "(7, 1)"),
-                              tuple(
-                                  target.posicao_para_str(x)
-                                  for x in target.ordenar_posicoes(t)))
+                              tuple(target.posicao_para_str(x) for x in target.ordenar_posicoes(t)))
+                              
 
     @unittest.skipUnless(ENABLE_MOCK_TESTING, "skipping mock tests")
     def test_posicao_mock(self, *_):
