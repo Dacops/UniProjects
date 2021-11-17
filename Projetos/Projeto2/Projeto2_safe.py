@@ -484,10 +484,10 @@ def cria_prado(d, r, a, p):
 
     # no caso de as posicoes de animais/rochas estarem para lah do limite
     for rocha in r:
-        if obter_pos_x(rocha)>=obter_pos_x(d) or obter_pos_y(rocha)>=obter_pos_y(d) or obter_pos_x(rocha)<1 or obter_pos_y(rocha)<1:
+        if obter_pos_x(rocha)>=obter_pos_x(d) or obter_pos_y(rocha)>=obter_pos_y(d):
             raise ValueError('cria_prado: argumentos invalidos')
     for coord in p:
-        if obter_pos_x(coord)>=obter_pos_x(d) or obter_pos_y(coord)>=obter_pos_y(d) or obter_pos_x(coord)<1 or obter_pos_y(coord)<1:
+        if obter_pos_x(coord)>=obter_pos_x(d) or obter_pos_y(coord)>=obter_pos_y(d):
             raise ValueError('cria_prado: argumentos invalidos')
     if len(a)!=len(p):
         raise ValueError('cria_prado: argumentos invalidos')
@@ -877,7 +877,7 @@ def geracao(m):
                             inserir_animal(prado, reproduz_animal(obter_animal(prado, mov)), p)
                         # Verificar a fome do animal
                         if eh_animal_faminto(a):
-                            eliminar_animal(prado, mov)
+                            eliminar_animal(prado, p)
                             
                     # Caso particular animal é presa
                     if eh_presa(obter_animal(m, p)):      
@@ -965,5 +965,7 @@ def simula_ecossistema(f,g,v):
             print('Predadores: {} vs Presas: {} (Gen. {})'.format(predadores,presas,g))
             print(prado_para_str(turno))
             return '({}, {})'.format(predadores,presas)
-            
+
         presas_ant, predadores_ant, turno_ant = presas, predadores, turno
+
+print(simula_ecossistema('C:\\Users\\david\\OneDrive\\Desktop\\Uni\\Fprog\\Projetos\\Projeto2\\config1.txt', 10, True))

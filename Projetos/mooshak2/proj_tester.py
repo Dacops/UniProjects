@@ -53,8 +53,9 @@ class TestTADPosicao(unittest.TestCase):
         self.assertTupleEqual(("(8, 0)", "(7, 1)", "(6, 0)"),
                               tuple(target.posicao_para_str(x) for x in t))
         self.assertTupleEqual(("(6, 0)", "(8, 0)", "(7, 1)"),
-                              tuple(target.posicao_para_str(x) for x in target.ordenar_posicoes(t)))
-                              
+                              tuple(
+                                  target.posicao_para_str(x)
+                                  for x in target.ordenar_posicoes(t)))
 
     @unittest.skipUnless(ENABLE_MOCK_TESTING, "skipping mock tests")
     def test_posicao_mock(self, *_):
@@ -149,7 +150,7 @@ class TestTADAnimal(unittest.TestCase):
         animal = target.cria_animal("rabbit", 7, 0)
         target.aumenta_fome(target.aumenta_fome(animal))
         self.assertEqual("rabbit [0/7]", target.animal_para_str(animal))
-        self.assertEqual(0, target.obter_fome(animal))  
+        self.assertEqual(0, target.obter_fome(animal))
 
     @unittest.skipUnless(ENABLE_MOCK_TESTING, "skipping mock tests")
     def test_animal_mock(self, *_):
@@ -300,7 +301,6 @@ class TestTADPrado(unittest.TestCase):
             target.cria_posicao(p[0], p[1])
             for p in ((5, 1), (7, 2), (10, 1), (6, 1)))
         prado = target.cria_prado(dim, obs, an1 + an2, pos)
-
         a = target.cria_animal('fox', 30, 7)
         p1 = target.cria_posicao(9, 3)
         prado = target.inserir_animal(prado, a, p1)
@@ -312,10 +312,66 @@ class TestTADPrado(unittest.TestCase):
 |........F.|
 +----------+""", target.prado_para_str(prado))
 
+    def test_obter_valor_numerico(self):
+        dim = target.cria_posicao(5, 16)
+        animal = target.cria_animal('rabbit', 5, 0)
+        posicao = target.cria_posicao(3, 5)
+        prado = target.cria_prado(dim, (), (animal, ), (posicao, ))
+
+        for x, y, res in ((0, 0, 0), (5, 0, 5), (0, 1, 6), (4, 1, 10),
+                          (4, 11, 70), (5, 16, 101)):
+            with self.subTest(x=x, y=y, valor_numerico=res):
+                pos = target.cria_posicao(x, y)
+                self.assertEqual(res, target.obter_valor_numerico(prado, pos))
+
+    def test_obter_movimento(self):
+        dim = target.cria_posicao(11, 4)
+        obs = (target.cria_posicao(4, 2), target.cria_posicao(5, 2))
+        an1 = tuple(target.cria_animal('rabbit', 5, 0) for i in range(3))
+        an2 = (target.cria_animal('lynx', 20, 15), )
+        pos = tuple(
+            target.cria_posicao(p[0], p[1])
+            for p in ((5, 1), (7, 2), (10, 1), (6, 1)))
+        prado = target.cria_prado(dim, obs, an1 + an2, pos)
+
+        for x, y, res in ((5, 1, '(4, 1)'), (6, 1, '(5, 1)'), (10, 1,
+                                                               '(10, 2)')):
+            with self.subTest(x=x, y=y, resultado=res):
+                mov = target.obter_movimento(prado, target.cria_posicao(x, y))
+                self.assertEqual(res, target.posicao_para_str(mov))
+
     @unittest.skipUnless(ENABLE_MOCK_TESTING, "skipping mock tests")
-    def test_prado_mock(self, *_):
+    def test_prado_mock_low_level(self, *_):
         """
-        Testa as barreiras de abstração do TAD Prado
+        Testa as barreiras de abstração do TAD Prado nas funções do TAD
+        """
+        mocks_to_use = (
+            ("posicao", posicaoFnNames, posicaoMocks),
+            ("animal", animalFnNames, animalMocks),
+            ("prado", pradoFnNames, pradoMocks),
+        )
+
+        for active_mocks in sum((tuple(combinations(mocks_to_use, r))
+                                 for r in range(1,
+                                                len(mocks_to_use) + 1)), ()):
+            names = ', '.join(map(lambda x: x[0], active_mocks))
+            fnNames = sum(map(lambda x: x[1], active_mocks), ())
+            mocks = sum(map(lambda x: x[2], active_mocks), ())
+
+            with self.subTest(msg="Active mocks: {}".format(names)):
+                __mocks = enable_mocks(target, fnNames, mocks)
+                try:
+                    self.test_cria_prado()
+                    self.test_cria_copia_prado()
+                    self.test_eliminar_animal()
+                    self.test_inserir_animal()
+                finally:
+                    restore_mocks(target, __mocks)
+
+    @unittest.skipUnless(ENABLE_MOCK_TESTING, "skipping mock tests")
+    def test_prado_mock_high_level(self, *_):
+        """
+        Testa as barreiras de abstração do TAD Prado nas funções de alto nível
         """
         mocks_to_use = (
             ("posicao", posicaoFnNames, posicaoMocks),
@@ -327,15 +383,13 @@ class TestTADPrado(unittest.TestCase):
                                                 len(mocks_to_use) + 1)), ()):
             names = ', '.join(map(lambda x: x[0], active_mocks))
             fnNames = sum(map(lambda x: x[1], active_mocks), ())
-            mocks = sum(map(lambda x: x[1], active_mocks), ())
+            mocks = sum(map(lambda x: x[2], active_mocks), ())
 
             with self.subTest(msg="Active mocks: {}".format(names)):
                 __mocks = enable_mocks(target, fnNames, mocks)
                 try:
-                    pass
-                    # TODO
-                    # self.test_obter_valor_numerico()
-                    # self.test_obter_movimento()
+                    self.test_obter_valor_numerico()
+                    self.test_obter_movimento()
                 finally:
                     restore_mocks(target, __mocks)
 
@@ -359,7 +413,7 @@ class TestFuncoesAdicionais(unittest.TestCase):
                                                 len(mocks_to_use) + 1)), ()):
             names = ', '.join(map(lambda x: x[0], active_mocks))
             fnNames = sum(map(lambda x: x[1], active_mocks), ())
-            mocks = sum(map(lambda x: x[1], active_mocks), ())
+            mocks = sum(map(lambda x: x[2], active_mocks), ())
 
             with self.subTest(msg="Active mocks: {}".format(names)):
                 __mocks = enable_mocks(target, fnNames, mocks)
@@ -551,8 +605,8 @@ pradoMocks = (
     lambda d, r, a, p: MockPrado(d, r, a, p), lambda p: p.foobar(),
     lambda p: target.obter_pos_x(p._foo) + 1,
     lambda p: target.obter_pos_y(p._foo) + 1,
-    lambda p: len(tuple(filter(eh_predador, p._foobar))),
-    lambda p: len(tuple(filter(eh_presa, p._foobar))),
+    lambda p: len(tuple(filter(target.eh_predador, p._foobar))),
+    lambda p: len(tuple(filter(target.eh_presa, p._foobar))),
     lambda p: target.ordenar_posicoes(p._barfoo), lambda p, l: p.foo(l),
     lambda p, l: p.bar(l), lambda p, l1, l2: p.barbar(l1, l2),
     lambda p, a, l: p.barfoo(a, l), lambda p: instanceof(p, MockPrado),
@@ -627,9 +681,9 @@ def check_for_updates():
         print("Esta é a primeira vez que estás a correr o programa.")
 
     print(
-        "Esta operação irá substituir o teu ficheiro local com a nova versão, apagando quaisqueres alterações que tenham sido feitas aos testes locais."
+        "Esta operação irá substituir o teu ficheiro local com a nova versão, apagando quaisquer alterações que tenham sido feitas aos testes locais."
     )
-    print("Desejas atualizar dos testes? [y/N]")
+    print("Desejas atualizar os testes? [y/N]")
     response = input()
     if response.lower() == "y":
         update_files(latest_hash)
