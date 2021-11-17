@@ -963,3 +963,5 @@ def simula_ecossistema(f,g,v):
             return '({}, {})'.format(predadores,presas)
             
         presas_ant, predadores_ant, turno_ant = presas, predadores, turno
+
+#1275

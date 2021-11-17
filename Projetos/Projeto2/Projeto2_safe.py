@@ -82,8 +82,8 @@ def posicoes_iguais(p1, p2):
     """
     if(eh_posicao(p1) and
        eh_posicao(p2) and        
-       p1['x']==p2['x'] and
-       p1['y']==p2['y']):
+       obter_pos_x(p1)==obter_pos_x(p2) and
+       obter_pos_y(p1)==obter_pos_y(p2)):
        return True
     return False
 
@@ -484,10 +484,10 @@ def cria_prado(d, r, a, p):
 
     # no caso de as posicoes de animais/rochas estarem para lah do limite
     for rocha in r:
-        if obter_pos_x(rocha)>=obter_pos_x(d) or obter_pos_y(rocha)>=obter_pos_y(d):
+        if obter_pos_x(rocha)>=obter_pos_x(d) or obter_pos_y(rocha)>=obter_pos_y(d) or obter_pos_x(rocha)<1 or obter_pos_y(rocha)<1:
             raise ValueError('cria_prado: argumentos invalidos')
     for coord in p:
-        if obter_pos_x(coord)>=obter_pos_x(d) or obter_pos_y(coord)>=obter_pos_y(d):
+        if obter_pos_x(coord)>=obter_pos_x(d) or obter_pos_y(coord)>=obter_pos_y(d) or obter_pos_x(coord)<1 or obter_pos_y(coord)<1:
             raise ValueError('cria_prado: argumentos invalidos')
     if len(a)!=len(p):
         raise ValueError('cria_prado: argumentos invalidos')
@@ -566,7 +566,7 @@ def obter_animal(m, p):
     count = -1
     for posicao in m['coords']:
         count += 1
-        if obter_pos_x(p)==obter_pos_x(posicao) and obter_pos_y(p)==obter_pos_y(posicao):
+        if posicoes_iguais(p, posicao):
             return m['animais'][count]
     return None
     
@@ -581,7 +581,7 @@ def eliminar_animal(m, p):
     count = -1
     for posicao in posicoes:
         count += 1
-        if obter_pos_x(p)==obter_pos_x(posicao) and obter_pos_y(p)==obter_pos_y(posicao):
+        if posicoes_iguais(p, posicao):
             break
 
     del animais[count]
@@ -599,7 +599,7 @@ def mover_animal(m, p1, p2):
     posicoes = list(m['coords'])
     count = 0
     for posicao in posicoes:
-        if obter_pos_x(p1)==obter_pos_x(posicao) and obter_pos_y(p1)==obter_pos_y(posicao):
+        if posicoes_iguais(p1,posicao):
             posicoes[count] = p2
         count += 1
     m['coords']=tuple(posicoes)
@@ -667,7 +667,7 @@ def eh_posicao_obstaculo(m, p):
     if x<1 or x>=a or y<1 or y>=b:
         return True
     for rocha in m['rochas']:
-        if obter_pos_x(p)==obter_pos_x(rocha) and obter_pos_y(p)==obter_pos_y(rocha):
+        if posicoes_iguais(p,rocha):
             return True
     return False
 
@@ -693,16 +693,16 @@ def prados_iguais(p1, p2):
         len(p1['animais'])==len(p2['animais']) and
         p1['limite']==p2['limite'] and
         ordenar_posicoes(p1['rochas'])==ordenar_posicoes(p2['rochas'])):
-        # verificar se animais, são iguais + suas coordenadas
+        # verificar se animais, sao iguais + suas coordenadas
         if ordenar_posicoes(p1['coords'])==ordenar_posicoes(p2['coords']):
             for posicao in ordenar_posicoes(p1['coords']):
                 count1,count2=0,0
                 for p in p1['coords']:
-                    if obter_pos_x(p)==obter_pos_x(posicao) and obter_pos_y(p)==obter_pos_y(posicao):
+                    if posicoes_iguais(p,posicao):
                         break
                     count1+=1
                 for p in p2['coords']:
-                    if obter_pos_x(p)==obter_pos_x(posicao) and obter_pos_y(p)==obter_pos_y(posicao):
+                    if posicoes_iguais(p,posicao):
                         break
                     count2+=1
                 if not animais_iguais(p1['animais'][count1],p2['animais'][count2]):
@@ -840,22 +840,22 @@ def geracao(m):
     a uma geracao completa, e devolve o proprio prado. Isto eh, seguindo a ordem de leitura do prado, cada animal 
     (vivo) realiza o seu turno de acao de acordo com as regras descritas.
     """
-    # De forma que "prado" não seja variavel local e prossiga para a proxima geracao.
+    # De forma que "prado" nao seja variavel local e prossiga para a proxima geracao.
     global prado
-    # Cria uma copia do prado, um prado é verificado e o outro alterado, de forma a que um prado não seja atualizado 
+    # Cria uma copia do prado, um prado eh verificado e o outro alterado, de forma a que um prado nao seja atualizado 
     # com dados inseridos nessa geracao.
     prado = cria_copia_prado(m)
 
     for y in range(obter_tamanho_y(m)):
         for x in range(obter_tamanho_x(m)):
-            p = cria_posicao(x,y)
-            if eh_posicao_animal(m, p):
-                if obter_animal(m,p)==obter_animal(prado,p):
+            p, eliminou = cria_posicao(x,y), 0
+            if eh_posicao_animal(m, p) and not eh_animal_faminto(obter_animal(m,p)):
+                if animais_iguais(obter_animal(m,p),obter_animal(prado,p)):
                     a = obter_animal(prado, p)
                     mov = obter_movimento(prado, p)
                     aumenta_idade(a)
                 
-                    # Caso particular animal é predador
+                    # Caso particular animal eh predador
                     if eh_predador(obter_animal(m, p)):
                         comeu=0
                         aumenta_fome(a)
@@ -869,20 +869,25 @@ def geracao(m):
                         if not eh_presa(obter_animal(prado, mov)) and comeu!=1:
                             mover_animal(prado, p, mov)
                         # verificar fertilidade do animal
-                        if eh_animal_fertil(a) and mov!=p:
+                        if eh_animal_fertil(a) and not posicoes_iguais(mov,p):
                             inserir_animal(prado, reproduz_animal(obter_animal(prado, mov)), p)
                         # Verificar a fome do animal
                         if eh_animal_faminto(a):
-                            eliminar_animal(prado, p)
+                            eliminar_animal(prado, mov)
+                            eliminou = 1
                             
-                    # Caso particular animal é presa
+                    # Caso particular animal eh presa
                     if eh_presa(obter_animal(m, p)):      
                         # Verificar a fertilidade do animal
                         if not eh_animal_fertil(a):
                             mover_animal(prado, p, mov)
-                        if eh_animal_fertil(a) and mov!=p:
+                        if eh_animal_fertil(a) and not posicoes_iguais(mov,p):
                             mover_animal(prado, p, mov)
                             inserir_animal(prado, reproduz_animal(obter_animal(prado, mov)), p)
+
+            # no caso de o animal nao estar vivo logo de inicio
+            if eh_posicao_animal(m, p) and eh_animal_faminto(obter_animal(m,p)) and eliminou==0:
+                eliminar_animal(prado,mov)
     return prado
 
 
@@ -963,3 +968,5 @@ def simula_ecossistema(f,g,v):
             return '({}, {})'.format(predadores,presas)
 
         presas_ant, predadores_ant, turno_ant = presas, predadores, turno
+
+#1253
