@@ -566,7 +566,7 @@ def obter_animal(m, p):
     count = -1
     for posicao in m['coords']:
         count += 1
-        if p==posicao:
+        if obter_pos_x(p)==obter_pos_x(posicao) and obter_pos_y(p)==obter_pos_y(posicao):
             return m['animais'][count]
     return None
     
@@ -581,7 +581,7 @@ def eliminar_animal(m, p):
     count = -1
     for posicao in posicoes:
         count += 1
-        if posicao==p:
+        if obter_pos_x(p)==obter_pos_x(posicao) and obter_pos_y(p)==obter_pos_y(posicao):
             break
 
     del animais[count]
@@ -599,7 +599,7 @@ def mover_animal(m, p1, p2):
     posicoes = list(m['coords'])
     count = 0
     for posicao in posicoes:
-        if p1==posicao:
+        if obter_pos_x(p1)==obter_pos_x(posicao) and obter_pos_y(p1)==obter_pos_y(posicao):
             posicoes[count] = p2
         count += 1
     m['coords']=tuple(posicoes)
@@ -653,7 +653,7 @@ def eh_posicao_animal(m, p):
     eh_posicao_animal: prado × posicao → booleano
     Devolve 'True' apenas no caso da posicao 'p' do prado estar ocupada por um animal.
     """
-    if p in m['coords']:
+    if eh_animal(obter_animal(m,p)):
         return True
     return False
 
@@ -666,8 +666,9 @@ def eh_posicao_obstaculo(m, p):
     x, y, a, b = obter_pos_x(p), obter_pos_y(p), obter_tamanho_x(m)-1, obter_tamanho_y(m)-1
     if x<1 or x>=a or y<1 or y>=b:
         return True
-    if p in m['rochas']:
-        return True
+    for rocha in m['rochas']:
+        if obter_pos_x(p)==obter_pos_x(rocha) and obter_pos_y(p)==obter_pos_y(rocha):
+            return True
     return False
 
 
@@ -697,11 +698,11 @@ def prados_iguais(p1, p2):
             for posicao in ordenar_posicoes(p1['coords']):
                 count1,count2=0,0
                 for p in p1['coords']:
-                    if p==posicao:
+                    if obter_pos_x(p)==obter_pos_x(posicao) and obter_pos_y(p)==obter_pos_y(posicao):
                         break
                     count1+=1
                 for p in p2['coords']:
-                    if p==posicao:
+                    if obter_pos_x(p)==obter_pos_x(posicao) and obter_pos_y(p)==obter_pos_y(posicao):
                         break
                     count2+=1
                 if not animais_iguais(p1['animais'][count1],p2['animais'][count2]):
@@ -717,35 +718,30 @@ def prado_para_str(m):
     """
     cx, cy, prado = obter_tamanho_x(m), obter_tamanho_y(m), ''
     for y in range(cy):                                                  
-        linha, existe = '', 0 
+        linha = ''
 
         # Caso particular, linha nao vazia
         for x in range(1, cx-1):
-            count = 0
-            if cria_posicao(x, y) in m['rochas']:
-                existe = 1
-                linha += '@'
-            if cria_posicao(x, y) in m['coords']:
-                existe = 1
-                for i in m['coords']:
-                    if cria_posicao(x,y)==i:
-                        break
-                    count+=1
-                linha += str(animal_para_char(m['animais'][count]))
-            if (cria_posicao(x,y) not in m['rochas'] and
-                cria_posicao(x,y) not in m['coords']):
+            count, existe = 0, 0
+            for rocha in m['rochas']:
+                if x==obter_pos_x(rocha) and y==obter_pos_y(rocha):
+                    existe = 1
+                    linha += '@'
+            for coord in m['coords']:
+                if x==obter_pos_x(coord) and y==obter_pos_y(coord):
+                    existe = 1
+                    linha += str(animal_para_char(m['animais'][count]))
+                count+=1
+            if existe==0:
                 linha += '.'
-        if existe==1:
-            prado+=('|{}|'.format(linha))+'\n'
 
         # Caso geral, linha vazia
-        else:
-            if y==0:
-                prado+=('+{}+'.format('-'*(cx-2)))+'\n'
-            if y==(cy-1):
-                prado+=('+{}+'.format('-'*(cx-2)))
-            if y!=0 and y!=(cy-1):
-                prado+=('|{}|'.format(linha))+'\n'
+        if y==0:
+            prado+=('+{}+'.format('-'*(cx-2)))+'\n'
+        if y==(cy-1):
+            prado+=('+{}+'.format('-'*(cx-2)))
+        if y!=0 and y!=(cy-1):
+            prado+=('|{}|'.format(linha))+'\n'
 
     return prado
 
@@ -967,5 +963,3 @@ def simula_ecossistema(f,g,v):
             return '({}, {})'.format(predadores,presas)
 
         presas_ant, predadores_ant, turno_ant = presas, predadores, turno
-
-print(simula_ecossistema('C:\\Users\\david\\OneDrive\\Desktop\\Uni\\Fprog\\Projetos\\Projeto2\\config1.txt', 10, True))
