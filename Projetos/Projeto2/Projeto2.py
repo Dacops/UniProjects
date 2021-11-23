@@ -82,8 +82,8 @@ def posicoes_iguais(p1, p2):
     """
     if(eh_posicao(p1) and
        eh_posicao(p2) and        
-       p1['x']==p2['x'] and
-       p1['y']==p2['y']):
+       obter_pos_x(p1)==obter_pos_x(p2) and
+       obter_pos_y(p1)==obter_pos_y(p2)):
        return True
     return False
 
@@ -549,12 +549,14 @@ def obter_posicao_animais(m):
     obter_posicao_animais: prado → tuplo posicoes
     Devolve um tuplo contendo as posicoes do prado ocupadas por animais, ordenadas em ordem de leitura do prado.
     """
+    # Nota: esta funcao nao eh eficiente, poderia-se usar mais vezes nas funcoes abaixo, no entanto não o será pois poderia criar erros do tipo "Time Limit Exceeded"
     posicoes = ()
     for y in range(obter_tamanho_y(m)):
         for x in range(obter_tamanho_x(m)):
             p = cria_posicao(x,y)
-            if eh_posicao_animal(m, p):
-                posicoes += (p, )
+            for posicao in m['coords']:
+                if posicoes_iguais(p,posicao):
+                    posicoes += (p, )
     return posicoes
 
 
@@ -566,9 +568,8 @@ def obter_animal(m, p):
     count = -1
     for posicao in m['coords']:
         count += 1
-        if obter_pos_x(p)==obter_pos_x(posicao) and obter_pos_y(p)==obter_pos_y(posicao):
+        if posicoes_iguais(p,posicao):
             return m['animais'][count]
-    return None
     
 
 
@@ -581,7 +582,7 @@ def eliminar_animal(m, p):
     count = -1
     for posicao in posicoes:
         count += 1
-        if obter_pos_x(p)==obter_pos_x(posicao) and obter_pos_y(p)==obter_pos_y(posicao):
+        if posicoes_iguais(p,posicao):
             break
 
     del animais[count]
@@ -599,7 +600,7 @@ def mover_animal(m, p1, p2):
     posicoes = list(m['coords'])
     count = 0
     for posicao in posicoes:
-        if obter_pos_x(p1)==obter_pos_x(posicao) and obter_pos_y(p1)==obter_pos_y(posicao):
+        if posicoes_iguais(p1,posicao):
             posicoes[count] = p2
         count += 1
     m['coords']=tuple(posicoes)
@@ -653,8 +654,9 @@ def eh_posicao_animal(m, p):
     eh_posicao_animal: prado × posicao → booleano
     Devolve 'True' apenas no caso da posicao 'p' do prado estar ocupada por um animal.
     """
-    if eh_animal(obter_animal(m,p)):
-        return True
+    for posicao in m['coords']:
+        if posicoes_iguais(p,posicao):
+            return True
     return False
 
 
@@ -667,7 +669,7 @@ def eh_posicao_obstaculo(m, p):
     if x<1 or x>=a or y<1 or y>=b:
         return True
     for rocha in m['rochas']:
-        if obter_pos_x(p)==obter_pos_x(rocha) and obter_pos_y(p)==obter_pos_y(rocha):
+        if posicoes_iguais(p,rocha):
             return True
     return False
 
@@ -698,11 +700,11 @@ def prados_iguais(p1, p2):
             for posicao in ordenar_posicoes(p1['coords']):
                 count1,count2=0,0
                 for p in p1['coords']:
-                    if obter_pos_x(p)==obter_pos_x(posicao) and obter_pos_y(p)==obter_pos_y(posicao):
+                    if posicoes_iguais(p,posicao):
                         break
                     count1+=1
                 for p in p2['coords']:
-                    if obter_pos_x(p)==obter_pos_x(posicao) and obter_pos_y(p)==obter_pos_y(posicao):
+                    if posicoes_iguais(p,posicao):
                         break
                     count2+=1
                 if not animais_iguais(p1['animais'][count1],p2['animais'][count2]):
@@ -764,30 +766,43 @@ def obter_posicoes_adjacentes_sorted(m, p):
     # adiciona limites ao prado, definidos pelo prado e verifica se a posicao eh livre
     x, y, m = obter_pos_x(p), obter_pos_y(p), cria_copia_prado(m)
     pa1, pa2, pa3, pa4 = None, None, None, None
-    if eh_presa(obter_animal(m, p)):
-        pa1=cria_copia_posicao(cria_posicao(x, y-1)) if x>0 and y-1>0 and x<obter_tamanho_x(m)-1 and y-1<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(x, y-1)) else None
-        pa2=cria_copia_posicao(cria_posicao(x+1, y)) if x+1>0 and y>0 and x+1<obter_tamanho_x(m)-1 and y<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(x+1, y)) else None
-        pa3=cria_copia_posicao(cria_posicao(x, y+1)) if x>0 and y+1>0 and x<obter_tamanho_x(m)-1 and y+1<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(x, y+1)) else None
-        pa4=cria_copia_posicao(cria_posicao(x-1, y)) if x-1>0 and y>0 and x-1<obter_tamanho_x(m)-1 and y<obter_tamanho_y(m)-1 and eh_posicao_livre(m, cria_posicao(x-1, y)) else None
-    
-    # funciona tal como o bloco de codigo acima, no entanto se a posicao estiver ocupada com uma presa retorna-a tambem
-    if eh_predador(obter_animal(m, p)):
-        pa1=cria_copia_posicao(cria_posicao(x, y-1)) if x>0 and y-1>0 and x<obter_tamanho_x(m)-1 and y-1<obter_tamanho_y(m)-1 else None
-        pa2=cria_copia_posicao(cria_posicao(x+1, y)) if x+1>0 and y>0 and x+1<obter_tamanho_x(m)-1 and y<obter_tamanho_y(m)-1 else None
-        pa3=cria_copia_posicao(cria_posicao(x, y+1)) if x>0 and y+1>0 and x<obter_tamanho_x(m)-1 and y+1<obter_tamanho_y(m)-1 else None
-        pa4=cria_copia_posicao(cria_posicao(x-1, y)) if x-1>0 and y>0 and x-1<obter_tamanho_x(m)-1 and y<obter_tamanho_y(m)-1 else None
-    
+    pa1=cria_copia_posicao(cria_posicao(x, y-1)) if x>0 and y-1>0 and x<obter_tamanho_x(m)-1 and y-1<obter_tamanho_y(m)-1 else None
+    pa2=cria_copia_posicao(cria_posicao(x+1, y)) if x+1>0 and y>0 and x+1<obter_tamanho_x(m)-1 and y<obter_tamanho_y(m)-1 else None
+    pa3=cria_copia_posicao(cria_posicao(x, y+1)) if x>0 and y+1>0 and x<obter_tamanho_x(m)-1 and y+1<obter_tamanho_y(m)-1 else None
+    pa4=cria_copia_posicao(cria_posicao(x-1, y)) if x-1>0 and y>0 and x-1<obter_tamanho_x(m)-1 and y<obter_tamanho_y(m)-1 else None
+
+    # porque utilizar este forma quando a funcao eh_posicao_livre() jah existe?
+    # eh_posicao_livre utiliza funcoes definidas anteriormente e loops, sendo muito mais cara "time wise", desta forma o programa eh mais eficiente e evita-se
+    # erros do tipo "Time Limit Exceeded"
+    # Diferenca de tempo em simula_ecossistema() (200loops, prado 8x8) -> -25%
+    posicoes_ocupadas = m['rochas']+m['coords']
+
+    if eh_presa(obter_animal(m,p)):
         if eh_posicao(pa1):
-            if not eh_posicao_livre(m, pa1) and not eh_presa(obter_animal(m, pa1)):
+            if pa1 in posicoes_ocupadas:
                 pa1=None
         if eh_posicao(pa2):
-            if not eh_posicao_livre(m, pa2) and not eh_presa(obter_animal(m, pa2)):
+            if pa2 in posicoes_ocupadas:
                 pa2=None
         if eh_posicao(pa3):
-            if not eh_posicao_livre(m, pa3) and not eh_presa(obter_animal(m, pa3)):
+            if pa3 in posicoes_ocupadas:
                 pa3=None
         if eh_posicao(pa4):
-            if not eh_posicao_livre(m, pa4) and not eh_presa(obter_animal(m, pa4)):
+            if pa4 in posicoes_ocupadas:
+                pa4=None
+
+    if eh_predador(obter_animal(m, p)):
+        if eh_posicao(pa1):
+            if pa1 in posicoes_ocupadas and not eh_presa(obter_animal(m, pa1)):
+                pa1=None
+        if eh_posicao(pa2):
+            if pa2 in posicoes_ocupadas and not eh_presa(obter_animal(m, pa2)):
+                pa2=None
+        if eh_posicao(pa3):
+            if pa3 in posicoes_ocupadas and not eh_presa(obter_animal(m, pa3)):
+                pa3=None
+        if eh_posicao(pa4):
+            if pa4 in posicoes_ocupadas and not eh_presa(obter_animal(m, pa4)):
                 pa4=None
 
     pad, pp = (pa1, pa2, pa3, pa4), ()
@@ -804,24 +819,23 @@ def obter_movimento(m, p):
     """
     animal = obter_animal(m, p)
     n = obter_valor_numerico(m, p)
-    l = len(obter_posicoes_adjacentes_sorted(m, p))
+    posicoes = obter_posicoes_adjacentes_sorted(m,p)
+    l = len(posicoes)
 
     if eh_presa(animal):
-        coord_ad = obter_posicoes_adjacentes_sorted(m, p)
-        if len(coord_ad)!=0:
-            return coord_ad[n%l]
+        if len(posicoes)!=0:
+            return posicoes[n%l]
         return p
     if eh_predador(animal):
-        coord_ad = obter_posicoes_adjacentes_sorted(m, p)
         presas = []
         # posicoes adjacentes, procura por presas
-        for coord in coord_ad:
+        for coord in posicoes:
             if (eh_posicao_animal(m, coord) and eh_presa(obter_animal(m, coord))):
                 presas.append(coord)
         if len(presas)!=0:
             return presas[n%len(presas)]
-        if len(coord_ad)!=0:
-            return coord_ad[n%l]
+        if len(posicoes)!=0:
+            return posicoes[n%l]
         return p
 
 
@@ -840,51 +854,38 @@ def geracao(m):
     a uma geracao completa, e devolve o proprio prado. Isto eh, seguindo a ordem de leitura do prado, cada animal 
     (vivo) realiza o seu turno de acao de acordo com as regras descritas.
     """
-    # De forma que "prado" não seja variavel local e prossiga para a proxima geracao.
-    global prado
-    # Cria uma copia do prado, um prado é verificado e o outro alterado, de forma a que um prado não seja atualizado 
-    # com dados inseridos nessa geracao.
-    prado = cria_copia_prado(m)
-
-    for y in range(obter_tamanho_y(m)):
-        for x in range(obter_tamanho_x(m)):
-            p = cria_posicao(x,y)
-            if eh_posicao_animal(m, p):
-                if obter_animal(m,p)==obter_animal(prado,p):
-                    a = obter_animal(prado, p)
-                    mov = obter_movimento(prado, p)
-                    aumenta_idade(a)
-                
-                    # Caso particular animal é predador
-                    if eh_predador(obter_animal(m, p)):
-                        comeu=0
-                        aumenta_fome(a)
-                        # Se o predador comer uma presa
-                        if eh_presa(obter_animal(prado, mov)):
-                            eliminar_animal(prado, mov)
-                            reset_fome(a)
-                            mover_animal(prado, p, mov)
-                            comeu=1
-                        # Se o predador apenas se mover
-                        if not eh_presa(obter_animal(prado, mov)) and comeu!=1:
-                            mover_animal(prado, p, mov)
-                        # verificar fertilidade do animal
-                        if eh_animal_fertil(a) and mov!=p:
-                            inserir_animal(prado, reproduz_animal(obter_animal(prado, mov)), p)
-                        # Verificar a fome do animal
-                        if eh_animal_faminto(a):
-                            eliminar_animal(prado, mov)
-                            
-                    # Caso particular animal é presa
-                    if eh_presa(obter_animal(m, p)):      
-                        # Verificar a fertilidade do animal
-                        if not eh_animal_fertil(a):
-                            mover_animal(prado, p, mov)
-                        if eh_animal_fertil(a) and mov!=p:
-                            mover_animal(prado, p, mov)
-                            inserir_animal(prado, reproduz_animal(obter_animal(prado, mov)), p)
-    return prado
-
+    # armaneza as posicoes para qual jah foram movidos animais nao os movendo outra vez na mesma geracao
+    atualizados=[]
+    for p in obter_posicao_animais(m):
+        # verifica se a funcao criada anteriormente eh ocupada por animal e se o mesmo nao foi movido anteriormente
+        if p not in atualizados:
+            a = obter_animal(m,p)
+            # 1. aumenta idade e fome (caso seja predador)
+            aumenta_idade(a)
+            if eh_predador(a):
+                aumenta_fome(a)
+            # 2. animal tenta movimentar-se, divide-se em dois casos, pois se for predador e comer uma presa essa presa eh eliminada
+            mov = obter_movimento(m,p)
+            # se o movimento obtido for igual ao atual, o animal nao se move e nao pode realisar os passos 3, 4
+            if not posicoes_iguais(mov,p):
+                # 4. caso particular onde predador come uma presa, em ordem: predador alimenta-se (reset fome), presa eh eliminada, predador move
+                if eh_predador(a) and eh_posicao_animal(m,mov):
+                    reset_fome(a)
+                    eliminar_animal(m,mov)
+                    atualizados.append(mov)
+                    mover_animal(m,p,mov)
+                # caso em que animal que move eh presa (ou predador mas move-se para posicao vazia), apenas se move
+                if eh_presa(a) or (eh_predador(a) and not eh_posicao_animal(m,mov)):
+                    mover_animal(m,p,mov)
+                # 3. tendo em conta que mov!=p, o animal movimentou-se, logo pode reproduzir-se (cria eh inserida na posicao da qual o animal se movimentou)
+                if eh_animal_fertil(a):
+                    inserir_animal(m, reproduz_animal(a), p)
+            # 5. verificar fome do predador, este passo aplica-se a ambos predadores que se moveram e predadores que nao se moveram
+            # se o predador nao se mover mov continua a ser igual a p por isso eh indiferente utilizar obter_animal(m,p) de obter_animal(m,mov) 
+            if eh_animal_faminto(obter_animal(m,mov)):
+                eliminar_animal(m,mov)
+    return m
+    
 
 def simula_ecossistema(f,g,v):
     """
@@ -919,7 +920,6 @@ def simula_ecossistema(f,g,v):
         coordenadas += (cria_posicao(animal[3][0], animal[3][1]), )
 
     # Criacao de prado, argumento para geracao().
-    global prado
     prado = cria_prado(limite, rochas, animais, coordenadas)
 
     # Simulacao de 'g' geracoes.
@@ -934,34 +934,30 @@ def simula_ecossistema(f,g,v):
                     pre += 1
             print('Predadores: {} vs Presas: {} (Gen. {})'.format(pre,pr,0))
             print(prado_para_str(prado))
-            presas_ant, predadores_ant, turno_ant = pr, pre, prado
+            presas_ant, predadores_ant, turno_ant = pr, pre, cria_copia_prado(prado)
 
         # Dah update a prado.
         turno = geracao(prado)
 
         # Obtencao de numero de presas/predadores para o output.
         presas, predadores = 0, 0
-        for y in range(obter_tamanho_y(prado)):
-            for x in range(obter_tamanho_x(prado)):
-                if eh_predador(obter_animal(prado, cria_posicao(x,y))):
+        for posicao in prado['coords']:
+                if eh_predador(obter_animal(prado, posicao)):
                     predadores += 1
-                if eh_presa(obter_animal(prado, cria_posicao(x,y))):
+                if eh_presa(obter_animal(prado, posicao)):
                     presas += 1
-
 
         if presas_ant!=presas or predadores_ant!=predadores:
             if v==True:
                 print('Predadores: {} vs Presas: {} (Gen. {})'.format(predadores,presas,i+1))
                 print(prado_para_str(turno))
 
-        if v==True and (turno_ant==turno or i+1==g):
+        if v==True and (prados_iguais(turno, turno_ant) or i+1==g):
             return '({}, {})'.format(predadores,presas)
 
-        if v==False and (turno_ant==turno or i+1==g):
+        if v==False and (prados_iguais(turno, turno_ant) or i+1==g):
             print('Predadores: {} vs Presas: {} (Gen. {})'.format(predadores,presas,g))
             print(prado_para_str(turno))
             return '({}, {})'.format(predadores,presas)
             
-        presas_ant, predadores_ant, turno_ant = presas, predadores, turno
-
-#1275
+        presas_ant, predadores_ant, turno_ant = presas, predadores, cria_copia_prado(prado)
