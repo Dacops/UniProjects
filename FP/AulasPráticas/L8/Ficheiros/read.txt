@@ -1,3 +1,0 @@
-Outro ficheiro para fazer os mesmos testes.
-Este ficheiro contem mais uma linha
-alem desta.
