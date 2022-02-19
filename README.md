@@ -1,2 +1,1 @@
-# Uni
-# Projects from Uni (BackUp)
+# Projects from Uni
