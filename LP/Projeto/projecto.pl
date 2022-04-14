@@ -9,8 +9,6 @@
 %  -> A primeira parte de cada variavel eh formada pelas iniciais da funcao a qual pertence, para melhor leitura,         %
 %     e evitar problemas de unificacao, uma vez que funcoes definidas podem ser chamadas posteriormente.                  %
 %  -> Meta-Predicados foram dados apos a iniciacao do projeto e por isso serao utilizados a partir do predicado 2.8.      %
-%     (eh normal que o codigo inicial esteja 100x pior que o final devido ahj experiencia que adquiri em prolog durante   %
-%     a realizacao do projeto).                                                                                           %
 %-------------------------------------------------------------------------------------------------------------------------%
 
 
