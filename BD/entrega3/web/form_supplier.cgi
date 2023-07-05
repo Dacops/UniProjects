@@ -1,0 +1,18 @@
+#!/usr/bin/python3 
+
+print('Content-type:text/html\n\n')
+print('<html>')
+print('<head>')
+print('<title>Form Supplier Page</title>')
+print('</head>')
+print('<body>')
+print('<link rel="stylesheet" href="form-style.css">')
+print('<form action="add_supplier.cgi" method="post">')
+print('<h2 align="center">Add Supplier</h2>') 
+print('<p>New tin: <input type="text" name="tin"/></p>')
+print('<p>New name: <input type="text" name="name"/></p>')
+print('<p>New address: <input type="text" name="address"/></p>')
+print('<p>New sku: <input type="text" name="sku"/></p>')
+print('<p><input type="submit" value="Submit"/></p>')
+print('</body>')
+print('</html>')

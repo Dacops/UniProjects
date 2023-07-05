@@ -1,0 +1,49 @@
+7.1
+SELECT order_no
+FROM orders
+JOIN contains USING (order_no)
+JOIN product USING (SKU)
+WHERE price > 50 AND
+EXTRACT(YEAR FROM date) = 2023
+
+-Operação otimizada: 
+"WHERE price > 50" - Filtragem de registos com base no valor da coluna "price".
+
+-Otimização: 
+Criação de um índice na coluna "price" da tabela "product" que permitirá que o SGBD localize
+rapidamente os registos que atendem à condição "price > 50", de modo a melhorar o desempenho da filtragem.
+
+-Justificação:
+Criámos um index na tabela "product" sobre o atributo "price", pois temos uma procura que envolve operadores de comparação.
+Neste caso a procura em árvore é mais rápida, pois a coluna "price" tem valores numéricos que podem variar em magnitude, 
+permitindo a rápida localização dos registos que atendem à condição "price > 50", utilizando o método BTREE que é capaz de
+organizar os valores em uma estrutura de árvore balanceada, reduzindo a quantidade de registos que precisam de ser percorridos.
+Assim, a fim de verificarmos isso, testámos num ficheiro sql de um populate com 9 milhões de linhas e reduziu o processo de 1962.899ms para 671.652ms, 
+portanto reduziu o tempo, aproximadamente, em 65.82%. 
+
+-Instrução de criação do índice SQL:
+CREATE INDEX product_price_idx ON product USING BTREE (price);
+
+
+7.2
+SELECT order_no, SUM(qty*price)
+FROM contains
+JOIN product USING (SKU)
+WHERE name LIKE ‘A%’
+GROUP BY order_no;
+
+-Operação otimizada:
+"WHERE name LIKE 'A%'" - Filtragem de registos com base em um padrão de pesquisa na coluna "name".
+
+-Otimização:
+Criação de um índice na coluna "name" da tabela "product" que permitirá que o SGBD localize rapidamente
+os registos que atendem à condição "name LIKE 'A%'".
+
+-Justificação:
+Criámos um index na tabela "product" sobre o atributo "name", pois temos uma procura sequencial, o que em 
+tabelas de dimensão elevada seria uma operação demorada. Neste caso a procura em árvore é mais rápida, pois
+o index BTREE permite que o banco de dados encontre rapidamente os registos cujos valores de "name" começam
+com 'A', reduzindo a quantidade de registos que precisam de ser percorridos.
+
+-Instrução de criação do índice SQL:
+CREATE INDEX product_name_idx ON product USING BTREE (name);

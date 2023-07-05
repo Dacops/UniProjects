@@ -1,0 +1,84 @@
+ -- 1. Liste o nome de todos os clientes que fizeram encomendas contendo produtos de preço superior 
+ -- a €50 no ano de 2023;
+
+        name
+--------------------
+ Amanda Anderson
+ Ashley Hernandez
+ Christopher Taylor
+ Daniel Thomas
+ David Garcia
+ Elizabeth Clark
+ Emily Johnson
+ Jennifer Brown
+ Jessica Martinez
+ John Smith
+ Joseph Turner
+ Matthew Moore
+ Michael Davis
+ Ryan Lewis
+ Sarah Wilson
+ Sophia Phillips
+ Stephanie Lee
+ William Hernandez
+(18 rows)
+
+
+
+ -- 2. Liste o nome de todos os empregados que trabalham em armazéns e não em escritórios e
+ -- processaram encomendas em Janeiro de 2023;
+
+       name
+-------------------
+ Joseph Anderson
+ Karen Davis
+ Michael Williams
+ Ashley Anderson
+ Christopher Davis
+ Emily Williams
+ John Smith
+ Joseph Anderson
+ Karen Davis
+ Michael Williams
+ Ashley Anderson
+ Christopher Davis
+ Emily Williams
+ John Smith
+(14 rows)
+
+
+
+ -- 3. Indique o nome do produto mais vendido;
+
+       name
+------------------
+ Wireless Speaker
+(1 row)
+
+
+
+ -- 4. Indique o valor total de cada venda realizada.
+
+ order_no |  total
+----------+----------
+     2001 |  4999.95
+     2002 |  4499.97
+     2003 |   399.98
+     2004 |  1199.96
+     2005 | 11999.94
+     2006 |  1299.99
+     2007 |  1599.98
+     2008 |  1499.97
+     2009 |  1049.93
+     2010 |   599.99
+     2011 |   319.96
+     2012 |   399.98
+     2013 |   649.95
+     2014 |   159.98
+     2015 |   449.97
+     2016 |    49.99
+     2017 |   159.96
+     2018 |   599.94
+     2019 |   749.97
+     2020 |  1599.98
+(20 rows)
